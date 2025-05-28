@@ -7,11 +7,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder,StandardScaler
-
 from src.exception import CustomException
 from src.logger import logging
 import os
-
 from src.utils import save_object
 
 @dataclass
@@ -23,10 +21,7 @@ class DataTransformation:
         self.data_transformation_config=DataTransformationConfig()
 
     def get_data_transformer_object(self):
-        '''
-        This function si responsible for data trnasformation
-        
-        '''
+      
         try:
             numerical_columns = ["writing_score", "reading_score"]
             categorical_columns = [
