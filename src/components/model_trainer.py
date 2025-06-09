@@ -8,7 +8,7 @@ from xgboost import XGBRegressor
 from sklearn.metrics import r2_score
 from src.exception import CustomException
 from src.logger import logging
-from src.utils import save_object, evaluate_model  # ensure evaluate_model is properly imported
+from src.utils import save_object, evaluate_model 
 
 @dataclass
 class ModelTrainingConfig:
@@ -20,7 +20,7 @@ class ModelTrainer:
 
     def initiate_model_trainer(self, train_array, test_array):
         try:
-            logging.info('Data Splitted')
+            logging.info('Splitting data into training and test sets')
 
             X_train, y_train, X_test, y_test = (
                 train_array[:, :-1],
@@ -30,28 +30,53 @@ class ModelTrainer:
             )
 
             models = {
-                "RandomForestRegressor": RandomForestRegressor(),
-                "GradientBoostingRegressor": GradientBoostingRegressor(),
-                "AdaboostRegressor": AdaBoostRegressor(),
-                "DecisionTreeRegressor": DecisionTreeRegressor(),
-                "LinearRegressor": LinearRegression(),
-                "XGBoostRegressor": XGBRegressor()
+                "Random Forest": RandomForestRegressor(),
+                "Gradient Boosting": GradientBoostingRegressor(),
+                "AdaBoost Regressor": AdaBoostRegressor(),
+                "Decision Tree": DecisionTreeRegressor(),
+                "Linear Regression": LinearRegression(),
+                "XGBRegressor": XGBRegressor()
             }
 
-            model_report: dict = evaluate_model(
+            params = {
+                "Decision Tree": {
+                    'max_depth': [1, 2, 10, None],
+                    'min_samples_split': [2, 3, 5],  
+                    'criterion': ['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+                },
+                "Random Forest": {
+                    'n_estimators': [8, 16, 32, 64, 128, 256]
+                },
+                "Gradient Boosting": {
+                    'learning_rate': [0.1, 0.01, 0.05, 0.001],
+                    'subsample': [0.6, 0.7, 0.75, 0.8, 0.85, 0.9],
+                    'n_estimators': [8, 16, 32, 64, 128, 256]
+                },
+                "Linear Regression": {}, 
+                "XGBRegressor": {
+                    'learning_rate': [0.1, 0.01, 0.05, 0.001],
+                    'n_estimators': [8, 16, 32, 64, 128, 256]
+                },
+                "AdaBoost Regressor": {
+                    'learning_rate': [0.1, 0.01, 0.5, 0.001],
+                    'n_estimators': [8, 16, 32, 64, 128, 256]
+                }
+            }
+
+            model_report, best_models = evaluate_model(
                 X_train=X_train, y_train=y_train,
                 X_test=X_test, y_test=y_test,
-                models=models
+                models=models, params=params
             )
 
             best_model_name = max(model_report, key=model_report.get)
             best_model_score = model_report[best_model_name]
-            best_model = models[best_model_name]
+            best_model = best_models[best_model_name]
 
             if best_model_score < 0.6:
-                raise CustomException('Yomon Model: Tuning yoki boshqa model rivojlantirish methodi kerak!')
+                raise CustomException('Low-performing model detected (R² < 0.6). Consider further tuning or trying other techniques.')
 
-            logging.info(f'Best Model Found: {best_model_name} with score {best_model_score:.2f}')
+            logging.info(f'Best Model: {best_model_name} with R² Score: {best_model_score:.4f}')
 
             save_object(
                 file_path=self.model_trainer_config.trained_model_file_path,
@@ -60,6 +85,7 @@ class ModelTrainer:
 
             predicted = best_model.predict(X_test)
             r2 = r2_score(y_test, predicted)
+
             return r2
 
         except Exception as e:
