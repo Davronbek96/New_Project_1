@@ -40,6 +40,6 @@ def predict_datapoint():
         return render_template('home.html', results=results[0])
 
 if __name__ == "__main__":
-    # Automatically open the browser
-    Timer(1, lambda: webbrowser.open("http://127.0.0.1:5000/")).start()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # For local testing only; comment out for AWS EB deployment
+    # Timer(1, lambda: webbrowser.open("http://127.0.0.1:5000/")).start()
+    application.run(host="0.0.0.0", port=5000, debug=True)
